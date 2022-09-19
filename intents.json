@@ -1,0 +1,282 @@
+{"intents":  [
+  {"tag": "greeting",
+    "patterns": ["hello", "hi", "high", "what's up"],
+    "responses": ["Hello there", "How are you?"],
+    "context_set": ""
+  },
+  {"tag": "departing",
+    "patterns": ["goodbye", "see you later", "i have to go"],
+    "responses": ["Until next time", "See you later"],
+    "context_set": ""
+  },
+  {"tag": "help",
+    "patterns": ["i need help", "can you help me", "i am stuck"],
+    "responses": ["What do you need help with", "How can I be of assistance", "What seems to be the matter?"],
+    "context_set": "help"
+  },
+  {"tag": "helping",
+    "patterns": ["How do I do this"],
+    "responses": ["Here", "", ""],
+    "context_filter": "help"
+  },
+  {"tag": "randomUpperBody",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": ""
+  },
+  {"tag": "randomWorkout",
+    "patterns": ["random work out"],
+    "responses": ["A random workout for Upper body or Lower body?"],
+    "context_set": "randomWorkout"
+  },
+  {"tag": "randomUpperBody",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": "randomWorkout"
+  },
+  {"tag": "randomLowerBody",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": "randomWorkout"
+  },
+  {"tag": "randomExercise",
+    "patterns": ["random exercise"],
+    "responses": ["what muscle group?"],
+    "context_set": "randomExercise"
+  },
+  {"tag": "randomArms",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": "randomExercise"
+  },
+  {"tag": "randomChest",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": "randomExercise"
+  },
+  {"tag": "randomBack",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": "randomExercise"
+  },
+  {"tag": "randomShoulders",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": "randomExercise"
+  },
+  {"tag": "random",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": "randomExercise"
+  },
+  {"tag": "random",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": "randomExercise"
+  },
+  {"tag": "BicepInfo",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": "information"
+  },
+  {"tag": "Place",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_set": ""
+  },
+  {"tag": "Holder",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": ""
+  },
+  {"tag": "startTimer",
+    "patterns": ["start timer", "set a timer"],
+    "responses": ["Are you sure you would like to start a timer"],
+    "context_set": "startTimer"
+  },
+  {"tag": "startTimerConfirmation",
+    "patterns": ["yes", "yes please", "start", "did i stutter"],
+    "responses": ["How long would you like to set a timer for?"],
+    "context_filter": "startTimer"
+  },
+  {"tag": "startTimerDenial",
+    "patterns": ["no", "do not", "don't", "i didn't say that", "i did not say that"],
+    "responses": ["Okay"],
+    "context_filter": "startTimer"
+  },
+  {"tag": "pauseTimer",
+    "patterns": ["pause", "pause timer"],
+    "responses": ["Are you sure you want to pause the timer?"],
+    "context_set": "pauseTimer"
+  },
+  {"tag": "pauseTimerConfirmation",
+    "patterns": ["yes", "yes please", "pause", "did i stutter"],
+    "responses": ["Okay"],
+    "context_filter": "pauseTimer"
+  },
+  {"tag": "pauseTimerDenial",
+    "patterns": ["no", "do not", "don't", "i didn't say that", "i did not say that"],
+    "responses": ["", "", ""],
+    "context_filter": "pauseTimer"
+  },
+  {"tag": "resumeTimer",
+    "patterns": ["", "", ""],
+    "responses": ["Are you sure you want to resume the timer?"],
+    "context_set": ""
+  },
+  {"tag": "resumeTimerConfirmation",
+    "patterns": ["", "", ""],
+    "responses": ["yes", "yes please", "resume", "did i stutter"],
+    "context_filter": ""
+  },
+  {"tag": "resumeTimerDenial",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": ""
+  },
+  {"tag": "stopTimer",
+    "patterns": ["", "", ""],
+    "responses": ["Are you sure you want to stop the timer?"],
+    "context_set": ""
+  },
+  {"tag": "stopTimerConfirmation",
+    "patterns": ["", "", ""],
+    "responses": ["yes", "yes please", "stop", "did i stutter"],
+    "context_filter": ""
+  },
+  {"tag": "stopTimerDenial",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": ""
+  },
+  {"tag": "startStopwatch",
+    "patterns": ["", "", ""],
+    "responses": [""],
+    "context_set": ""
+  },
+  {"tag": "startStopwatchConfirmation",
+    "patterns": ["", "", ""],
+    "responses": ["yes", "yes please", "start", "did i stutter"],
+    "context_filter": ""
+  },
+  {"tag": "startStopwatchDenial",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": ""
+  },
+  {"tag": "pauseStopwatch",
+    "patterns": ["", "", ""],
+    "responses": ["Are you sure you want to pause the stopwatch"],
+    "context_set": ""
+  },
+  {"tag": "pauseStopwatchConfirmation",
+    "patterns": ["", "", ""],
+    "responses": ["yes", "yes please", "pause", "did i stutter"],
+    "context_filter": ""
+  },
+  {"tag": "pauseStopwatchDenial",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": ""
+  },
+  {"tag": "resumeStopwatch",
+    "patterns": ["", "", ""],
+    "responses": ["Are you sure you want to resume the stopwatch"],
+    "context_set": ""
+  },
+  {"tag": "resumeStopwatchConfirmation",
+    "patterns": ["", "", ""],
+    "responses": ["yes", "yes please", "resume", "did i stutter"],
+    "context_filter": ""
+  },
+  {"tag": "resumeStopwatchDenial",
+    "patterns": ["no", "do not", "don't", "i didn't say that", "i did not say that"],
+    "responses": ["", "", ""],
+    "context_filter": ""
+  },
+  {"tag": "stopStopwatch",
+    "patterns": ["", "", ""],
+    "responses": ["Are you sure you want to resume the stopwatch", "", ""],
+    "context_set": ""
+  },
+  {"tag": "stopStopwatchConfirmation",
+    "patterns": ["", "", ""],
+    "responses": ["yes", "yes please", "stop", "did i stutter"],
+    "context_filter": ""
+  },
+  {"tag": "stopStopwatchDenial",
+    "patterns": ["no", "do not", "don't", "i didn't say that", "i did not say that"],
+    "responses": ["", "", ""],
+    "context_filter": ""
+  },
+  {"tag": "",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_set": ""
+  },
+  {"tag": "",
+    "patterns": ["", "", ""],
+    "responses": ["", "", ""],
+    "context_filter": ""
+  },
+  {"tag": "pauseRequest",
+    "patterns": ["pause", "pause program"],
+    "responses": ["Are you sure you want to pause the program"],
+    "context_set": "pauseProgram"
+  },
+  {"tag": "pauseConfirmation",
+    "patterns": ["yes", "yes please", "pause", "did i stutter"],
+    "responses": ["Pausing"],
+    "context_filter": "pauseProgram"
+  },
+  {"tag": "pauseDenial",
+    "patterns": ["no", "do not", "don't", "i didn't say that", "i did not say that"],
+    "responses": ["Okay"],
+    "context_filter": "pauseProgram"
+  },
+  {"tag": "resumeRequest",
+    "patterns": ["resume", "resume program"],
+    "responses": ["Are you sure you would like to resume the program"],
+    "context_set": "resumeProgram"
+  },
+  {"tag": "ResumeConfirmation",
+    "patterns": ["yes", "yes please","resume", "did i stutter"],
+    "responses": ["Resuming", "Okay", "Get ready"],
+    "context_filter": "resumeProgram"
+  },
+  {"tag": "ResumeDenial",
+    "patterns": ["no", "do not", "don't", "i didn't say that", "i did not say that"],
+    "responses": ["Okay"],
+    "context_filter": "resumeProgram"
+  },
+  {"tag": "stopRequest",
+    "patterns": ["stop", "stop program"],
+    "responses": ["Are you sure you want to stop the program"],
+    "context_set": "stopProgram"
+  },
+  {"tag": "stopConfirmation",
+    "patterns": ["yes", "yes please", "stop", "did i stutter"],
+    "responses": ["Okay, one moment", "Stopping program"],
+    "context_filter": "stopProgram"
+  },
+  {"tag": "stopDenial",
+    "patterns": ["no", "do not", "don't", "i didn't say that", "i did not say that"],
+    "responses": ["Okay"],
+    "context_filter": "stopProgram"
+  },
+  {"tag": "exitRequest",
+    "patterns": ["exit", "terminate", "quit"],
+    "responses": ["Are you sure you want to exit the program?"],
+    "context_set": "exitProgram"
+  },
+  {"tag": "exitConfirmation",
+    "patterns": ["yes", "yes please", "exit", "did i stutter"],
+    "responses": ["Have a good day", "See you around", "Goodbye"],
+    "context_filter": "exitProgram"
+  },
+  {"tag": "exitDenial",
+    "patterns": ["no", "do not", "don't", "i didn't say that", "i did not say that"],
+    "responses": ["Okay"],
+    "context_filter": "exitProgram"
+  }
+]}
