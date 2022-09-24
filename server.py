@@ -1,4 +1,4 @@
-from cameraMain import exerciseCamera, gameCamera, s
+from cameraMain import exerciseCamera, gameCamera
 # from plotMain import plot
 import keyboard
 from socket import socket, AF_INET,\

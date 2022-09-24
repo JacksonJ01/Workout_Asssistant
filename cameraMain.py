@@ -17,7 +17,7 @@ def exerciseCamera(defaultCam=1):
                "leftShoulder|leftWrist": [], "rightShoulder|rightWrist": [],
                "leftHip|LeftAnkle": [], "rightHip|rightAnkle": []}
 
-    verificationTime = 1  # The program will take 2x seconds to verify the workout
+    verificationTime = .2  # The program will take 2x seconds to verify the workout
     startingPreparations = time()
     beginVerification = None
 
@@ -40,19 +40,31 @@ def exerciseCamera(defaultCam=1):
         video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test1.gif")  # Bicep Curl
     elif defaultCam == 2:
         video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test2.gif")  # Bicep Curl 2
+    elif defaultCam == 3:
+        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test6.gif")  # Bicep Curls  need new
     elif defaultCam == 4:
         video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test3.gif")  # Squat
     elif defaultCam == 5:
         video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test4.gif")  # Back Squat 2
     elif defaultCam == 6:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test5.gif")  # Squat 3
-    elif defaultCam == 3:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test6.gif")  # Bicep Curls
+        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test5.gif")  # Squat 3  need new
+    elif defaultCam == 7:
+        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test7.gif")  # Front Squats
+    elif defaultCam == 8:
+        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test8.gif")  # Front Squats
+    elif defaultCam == 9:
+        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test9.gif")
 
     xLength = 1080
     yHeight = 720
     video.set(3, xLength)
     video.set(4, yHeight)
+
+    #
+    # Communication
+    server = socket(AF_INET, SOCK_DGRAM)
+    serverAddressPort = ("127.0.0.1", 54124)
+
     while True:
         try:
             img, assumption2, repCompleted, allLocations = readImg(video, pose, drawLM, showInterest=True,
@@ -60,10 +72,18 @@ def exerciseCamera(defaultCam=1):
                                                                    showText=True, known=known,
                                                                    confirmedExercise=confirmedExercise)
 
-            # Communication
-            server = socket(AF_INET, SOCK_DGRAM)
-            serverAddressPort = ("127.0.0.1", 54124)
-            server.sendto(str.encode(str(allLocations)), serverAddressPort)
+
+
+
+            # print(allLocations)
+            convertedLoc = []
+            # Loop to adjust the Y cords of the location
+            for cor in allLocations:
+                new = cor[1], yHeight - cor[2], cor[3]
+                convertedLoc.append(new)
+
+            server.sendto(str.encode(str(convertedLoc)), serverAddressPort)
+            print(convertedLoc)
 
         except TypeError:
             continue
@@ -144,20 +164,11 @@ def gameCamera(defaultCam=1, video=None):
     xLength = 1080
     yHeight = 720
 
+    # I am just realizing these gifs only work on my laptop
     if defaultCam == 0:
         video = cv2.VideoCapture(0)
-    elif defaultCam == 1:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test1.gif")  # Bicep Curl
-    elif defaultCam == 2:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test2.gif")  # Bicep Curl 2
-    elif defaultCam == 4:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test3.gif")  # Squat
-    elif defaultCam == 5:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test4.gif")  # Back Squat 2
-    elif defaultCam == 6:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test5.gif")  # Squat 3
-    elif defaultCam == 3:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test6.gif")  # Bicep Curls
+    else:
+        exit("Wrong Fucntion")
 
     video.set(3, xLength)
     video.set(4, yHeight)
@@ -167,14 +178,14 @@ def gameCamera(defaultCam=1, video=None):
             img, _, _, allLocations = readImg(video, pose, drawLM, showInterest=True, showDots=False, showLines=True,
                                               showText=True)
 
-            # print(allLocations)
+            print(allLocations)
             convertedLoc = []
             # Loop to adjust the Y cords of the location
             for cor in allLocations:
                 new = cor[1], yHeight - cor[2], cor[3]
                 convertedLoc.append(new)
 
-            print(convertedLoc)
+            # print(convertedLoc)
 
             try:
                 cv2.imshow("Image", img)
@@ -231,4 +242,5 @@ def cameraPlotting():
 #_______________________________________________________________________________________________
 # gameCamera()
 exerciseCamera(1)
+# 1, 2, , 4, 5, , ,7 ,8 ,9
 # cameraPlotting()

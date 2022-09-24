@@ -1,14 +1,14 @@
 import cv2
 import mediapipe as mp
 from math import atan2, pi
-from time import time, sleep as s
+from time import time  # , sleep as s
 
 
 def readImg(video, pose, drawLM, showInterest=False, showDots=False,
             showLines=False, showText=True, known=False, confirmedExercise=None):
     _, img = video.read()
     try:
-        img = cv2.resize(img, (720, 540))
+        img = cv2.resize(img, (1080, 720))
     except cv2.error:
         pass
     if not _:
@@ -23,7 +23,7 @@ def readImg(video, pose, drawLM, showInterest=False, showDots=False,
         if known is True:
             return img, assumption, detectRepetitions(confirmedExercise, leftAngles, rightAngles), allLocations
         else:
-            assumption = detectExercise(leftAngles, rightAngles)
+            assumption = detectExercise(leftAngles, rightAngles, allLocations)
 
     except TypeError:
         pass
@@ -199,11 +199,13 @@ class Exercise:
     def __init__(self, name,
                  lelbow, lpit, lhip, lknee,
                  relbow, rpit, rhip, rknee,
-                 mirrored=False):
+                 mirrored=False,
+                 specificPositioning=False):
         self.name = name
         self.leftAngles = [lelbow, lpit, lhip, lknee]
         self.rightAngles = [relbow, rpit, rhip, rknee]
         self.mirrored = mirrored
+        self.specific = specificPositioning
 
     def exerciseLeftAngles(self):
         return self.leftAngles
@@ -217,35 +219,43 @@ bicepCurls = Exercise("BicepCurls",
                       (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180),
                       True)
 singleArmBicepCurls = Exercise("SingleArmBicepCurls",
-                      (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180),
-                      (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180)
-                      )
-squats = Exercise("Squats",
-                  (0, 90, 70), (0, 45, 45), (0, 100, 70), (0, 100, 70),
-                  (0, 90, 70), (0, 45, 45), (0, 100, 70), (0, 100, 70),
-                  True)
+                               (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180),
+                               (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180)
+                               )
+barbellSquats = Exercise("barbellSquats",
+                         (0, 70, 70), (0, 70, 70), (0, 100, 70), (0, 100, 70),
+                         (0, 70, 70), (0, 70, 70), (0, 100, 70), (0, 100, 70),
+                         True
+                         )
+gobletSquats = Exercise("gobletSquats",
+                        (0, 25, 25), (0, 25, 25), (0, 100, 70), (0, 100, 70),
+                        (0, 25, 25), (0, 25, 25), (0, 100, 70), (0, 100, 70),
+                        True
+                        )
 
 exercises = {bicepCurls: [bicepCurls.exerciseLeftAngles(),
-                               bicepCurls.exerciseRightAngles()],
+                          bicepCurls.exerciseRightAngles()],
              singleArmBicepCurls: [singleArmBicepCurls.exerciseLeftAngles(),
-                                        singleArmBicepCurls.exerciseRightAngles()],
-             squats: [squats.exerciseLeftAngles(),
-                           squats.exerciseRightAngles()]}
+                                   singleArmBicepCurls.exerciseRightAngles()],
+             barbellSquats: [barbellSquats.exerciseLeftAngles(),
+                             barbellSquats.exerciseRightAngles()],
+             gobletSquats: [gobletSquats.exerciseLeftAngles(),
+                            gobletSquats.exerciseRightAngles()]}
 
 
 # _____________________________________________________________________________
-def detectExercise(leftAngles, rightAngles):
+def detectExercise(leftAngles, rightAngles, loc):
     print("\nDetecting")
     # presetExerciseAngles = []
     # Exercises listed below have 2 lists. These lists correlate to the major and minor angles list;
     # When the computer checks for the exercises, it will loop through the list and append that to another loop#
     potentialExercises = []
     mirrored = {}
-
+    angles = leftAngles, rightAngles
     for exercise in exercises:
         # The first [] takes you to either the:
-        # leftAngles list: [0] or
-        # rightAngles list [1]
+        # exerciseLeftAngles list: [0] or
+        # exerciseRightAngles list [1]
         # The second [] takes you to the specific angle range for each exercise:
         # Elbow Angle Range: [0]
         # Shoulder Angle Range: [1]
@@ -254,9 +264,7 @@ def detectExercise(leftAngles, rightAngles):
         # The third [] takes you to the:
         # Minimum range: [0]
         # Maximum range: [1]
-
         try:
-            angles = leftAngles, rightAngles
             mirrored[exercise.name] = [False, False]
             for sub in range(2):
                 if (exercises[exercise][sub][0][0] <= angles[sub][0][1] <= exercises[exercise][sub][0][1] and
@@ -282,6 +290,28 @@ def detectExercise(leftAngles, rightAngles):
                 potentialExercises.remove(exer)
             else:
                 pass
+
+    # Right wrist has to be to the right of the shoulder and within a certain height
+    # Left wrist has to be to the left of the shoulder and within a certain height
+
+    # If the distance between the wrists and the shoulder is greater than
+    # the distance between the wrist and the middle of the chest then squats
+    # #
+    # Right wrist 15
+    # Right Elbow 13
+    # Right Shoulder 11
+    # Left wrist 16
+    # Left Elbow 14
+    # Left Shoulder 12
+    # print(loc[15][1], loc[11][1], loc[16][1], loc[12][1])
+    if loc[13][1] > loc[11][1] > loc[15][1] and loc[14][1] < loc[12][1] < loc[16][1]:
+        if gobletSquats.exerciseLeftAngles()[1][0] < angles[0][0][1] < gobletSquats.exerciseLeftAngles()[1][1] and \
+                gobletSquats.exerciseRightAngles()[1][0] < angles[1][0][1] < gobletSquats.exerciseRightAngles()[1][1]:
+            return gobletSquats.name
+    elif loc[15][1] > loc[13][1] > loc[11][1] and loc[16][1] < loc[14][1] < loc[12][1]:
+        if barbellSquats.exerciseLeftAngles()[1][0] < angles[0][0][1] < barbellSquats.exerciseLeftAngles()[1][1] and \
+                barbellSquats.exerciseRightAngles()[1][0] < angles[1][0][1] < barbellSquats.exerciseRightAngles()[1][1]:
+            return barbellSquats.name
 
     try:
         exName = potentialExercises[0]
@@ -309,7 +339,7 @@ def detectRepetitions(confirmedExercise, leftAngles, rightAngles):
         # This loop will go through a value of 0 and 1:
         # At 0 we enter the check for the left targetAngle angles
         # At 1 we enter the check for the right targetAngle angles
-        # The exercises dictionary contains the targetAngle angle in the 3 location to make things easy;
+        # The "exercises" dictionary contains the targetAngle angle in the 3 location to make things easy;
         # The currentAngle gives the [location, Angle, visibility], so we take the second value
         # We then compare these 2 values
         anglesSatisfied = [False, False]
@@ -318,10 +348,10 @@ def detectRepetitions(confirmedExercise, leftAngles, rightAngles):
                     currentAngle[sub][1][1] <= targetAngle[sub][1][2] and \
                     currentAngle[sub][2][1] <= targetAngle[sub][2][2] and \
                     currentAngle[sub][3][1] <= targetAngle[sub][3][2]:
-                    if sub == 0:
-                        anglesSatisfied[0] = True
-                    else:
-                        anglesSatisfied[1] = True
+                if sub == 0:
+                    anglesSatisfied[0] = True
+                else:
+                    anglesSatisfied[1] = True
 
         if anglesSatisfied is True:
             return True
