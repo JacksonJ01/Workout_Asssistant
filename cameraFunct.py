@@ -1,16 +1,21 @@
 import cv2
 import mediapipe as mp
-from math import atan2, pi
+from math import atan2, pi, dist
 from time import time  # , sleep as s
 
 
-def readImg(video, pose, drawLM, showInterest=False, showDots=False,
-            showLines=False, showText=True, known=False, confirmedExercise=None):
+def readImg(video, pose, drawLM, exName, showInterest=False, showDots=False,
+            showLines=False, showText=False, known=False, confirmedExercise=None):
     _, img = video.read()
+
     try:
-        img = cv2.resize(img, (1080, 720))
+        # img = cv2.resize(img, (1080, 720))
+        # img = cv2.resize(img, (720, 480))
+        img = cv2.resize(img, (900, 500))
+        cv2.imshow("Image", img)
     except cv2.error:
-        pass
+            pass
+
     if not _:
         return
 
@@ -21,9 +26,9 @@ def readImg(video, pose, drawLM, showInterest=False, showDots=False,
     try:
         img, leftAngles, rightAngles = calculateAngle(img, locationsOfInterest, showText)
         if known is True:
-            return img, assumption, detectRepetitions(confirmedExercise, leftAngles, rightAngles), allLocations
+            return img, assumption, exName, detectRepetitions(confirmedExercise, leftAngles, rightAngles, allLocations, exName), trackAngles(leftAngles, rightAngles), allLocations
         else:
-            assumption = detectExercise(leftAngles, rightAngles, allLocations)
+            assumption, exName = detectExercise(leftAngles, rightAngles, allLocations)
 
     except TypeError:
         pass
@@ -32,7 +37,7 @@ def readImg(video, pose, drawLM, showInterest=False, showDots=False,
     # print(leftAngles)
     # print(rightAngles)
 
-    return img, assumption, False, allLocations
+    return img, assumption, exName, False, None, allLocations
 
 
 # _____________________________________________________________________________
@@ -184,17 +189,6 @@ def checkVisibility(leftVisibility: list, rightVisibility: list):
 
 
 # _____________________________________________________________________________
-def trackMovement(num, xcor, ycor):
-    # Nose, leftShoulder, leftElbow, leftWrist, rightShoulder, rightElbow, rightWrist,
-    # leftHip, leftKnee, leftAnkle, rightHip, rightKnee, rightAnkle
-    if num == 0:
-        pass
-
-    # checks the distance between nodes to look for reps
-    # tracked[""].append()
-
-
-# _____________________________________________________________________________
 class Exercise:
     def __init__(self, name,
                  lelbow, lpit, lhip, lknee,
@@ -214,22 +208,22 @@ class Exercise:
         return self.rightAngles
 
 
-bicepCurls = Exercise("BicepCurls",
+bicepCurls = Exercise("bicepCurls",
                       (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180),
                       (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180),
                       True)
-singleArmBicepCurls = Exercise("SingleArmBicepCurls",
+singleArmBicepCurls = Exercise("singleArmBicepCurls",
                                (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180),
                                (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180)
                                )
 barbellSquats = Exercise("barbellSquats",
-                         (0, 70, 70), (0, 70, 70), (0, 100, 70), (0, 100, 70),
-                         (0, 70, 70), (0, 70, 70), (0, 100, 70), (0, 100, 70),
+                         (15, 110, 110), (15, 110, 110), (0, 150, 150), (0, 150, 150),
+                         (15, 110, 110), (15, 110, 110), (0, 150, 150), (0, 150, 150),
                          True
                          )
 gobletSquats = Exercise("gobletSquats",
-                        (0, 25, 25), (0, 25, 25), (0, 100, 70), (0, 100, 70),
-                        (0, 25, 25), (0, 25, 25), (0, 100, 70), (0, 100, 70),
+                        (0, 30, 30), (0, 50, 50), (0, 150, 150), (0, 150, 150),
+                        (0, 30, 30), (0, 50, 50), (0, 150, 150), (0, 150, 150),
                         True
                         )
 
@@ -304,62 +298,78 @@ def detectExercise(leftAngles, rightAngles, loc):
     # Left Elbow 14
     # Left Shoulder 12
     # print(loc[15][1], loc[11][1], loc[16][1], loc[12][1])
-    if loc[13][1] > loc[11][1] > loc[15][1] and loc[14][1] < loc[12][1] < loc[16][1]:
-        if gobletSquats.exerciseLeftAngles()[1][0] < angles[0][0][1] < gobletSquats.exerciseLeftAngles()[1][1] and \
-                gobletSquats.exerciseRightAngles()[1][0] < angles[1][0][1] < gobletSquats.exerciseRightAngles()[1][1]:
-            return gobletSquats.name
-    elif loc[15][1] > loc[13][1] > loc[11][1] and loc[16][1] < loc[14][1] < loc[12][1]:
-        if barbellSquats.exerciseLeftAngles()[1][0] < angles[0][0][1] < barbellSquats.exerciseLeftAngles()[1][1] and \
-                barbellSquats.exerciseRightAngles()[1][0] < angles[1][0][1] < barbellSquats.exerciseRightAngles()[1][1]:
-            return barbellSquats.name
+
+    if (loc[13][1] or loc[11][1]) >= loc[15][1] and (loc[14][1] or loc[12][1]) <= loc[16][1]:
+        if gobletSquats.exerciseLeftAngles()[1][0] <= angles[0][0][1] <= gobletSquats.exerciseLeftAngles()[1][1] and \
+                    gobletSquats.exerciseRightAngles()[1][0] <= angles[1][0][1] <= gobletSquats.exerciseRightAngles()[1][1]:
+            potentialExercises.insert(0, gobletSquats)
+
+    elif loc[15][1] >= loc[13][1] >= loc[11][1] and loc[16][1] <= loc[14][1] <= loc[12][1]:
+        if barbellSquats.exerciseLeftAngles()[1][0] <= angles[0][0][1] <= barbellSquats.exerciseLeftAngles()[1][1] and \
+                barbellSquats.exerciseRightAngles()[1][0] <= angles[1][0][1] <= barbellSquats.exerciseRightAngles()[1][1]:
+            potentialExercises.insert(0, barbellSquats)
 
     try:
         exName = potentialExercises[0]
-        exName = exName.name
-        print(exName)
-        return exName
+        # exName = exName.name
+        print(exName.name)
+        return exName.name, exName
     except IndexError:
         pass
 
 
 # _____________________________________________________________________________
-def detectRepetitions(confirmedExercise, leftAngles, rightAngles):
-    print("Detect Reps")
-    print(confirmedExercise)
+def detectRepetitions(confirmedExercise, leftAngles, rightAngles, loc=None, exName=None):
+    print(f"\nDetecting Reps For: {confirmedExercise}\n")
+    # print(confirmedExercise)
     try:
         currentAngle = leftAngles, rightAngles
-        targetAngle = exercises[confirmedExercise]
+        # print(currentAngle[0],
+        #       "\n", exName.exerciseLeftAngles(),
+        #       "\n", currentAngle[0],
+        #       "\n", exName.exerciseLeftAngles(),
+        #       )
 
-        print(currentAngle, "\n", targetAngle)
-        print("Left", currentAngle[0][0][1], "Right", currentAngle[1][0][1], targetAngle[0][0][2], "\n",
-              "Left", currentAngle[0][1][1], "Right", currentAngle[1][1][1], targetAngle[0][1][2], "\n",
-              "Left", currentAngle[0][2][1], "Right", currentAngle[1][2][1], targetAngle[0][2][2], "\n",
-              "Left", currentAngle[0][3][1], "Right", currentAngle[1][3][1], targetAngle[0][3][2])
+        _exName = [exName.exerciseLeftAngles(), exName.exerciseRightAngles()]
 
-        # This loop will go through a value of 0 and 1:
-        # At 0 we enter the check for the left targetAngle angles
-        # At 1 we enter the check for the right targetAngle angles
-        # The "exercises" dictionary contains the targetAngle angle in the 3 location to make things easy;
-        # The currentAngle gives the [location, Angle, visibility], so we take the second value
-        # We then compare these 2 values
-        anglesSatisfied = [False, False]
+        reps = [False, False]
+        # Display for a visual of the angles at work
+        print("                |      Left Side      |      Right Side",
+              f"\nShoulder Angle  |  {padding(f'{_exName[0][1][0]} <= {currentAngle[0][1][1]} <= {_exName[0][1][2]}')}|  {padding(f'{_exName[1][1][0]} <= {currentAngle[1][1][1]} <= {_exName[1][1][2]}')}|",
+              f"\nElbow Angle     |  {padding(f'{_exName[0][0][0]} <= {currentAngle[0][1][1]} <= {_exName[0][0][2]}')}|  {padding(f'{_exName[1][0][0]} <= {currentAngle[1][0][1]} <= {_exName[1][0][2]}')}|",
+              f"\nHip Angle       |  {padding(f'{_exName[0][2][0]} <= {currentAngle[0][2][1]} <= {_exName[0][2][2]}')}|  {padding(f'{_exName[1][2][0]} <= {currentAngle[1][2][1]} <= {_exName[1][2][2]}')}|",
+              f"\nKnee Angle      |  {padding(f'{_exName[0][3][0]} <= {currentAngle[0][3][1]} <= {_exName[0][3][2]}')}|  {padding(f'{_exName[1][3][0]} <= {currentAngle[1][3][1]} <= {_exName[1][3][2]}')}|")
+
         for sub in range(2):
-            if currentAngle[sub][0][1] <= targetAngle[sub][0][2] and \
-                    currentAngle[sub][1][1] <= targetAngle[sub][1][2] and \
-                    currentAngle[sub][2][1] <= targetAngle[sub][2][2] and \
-                    currentAngle[sub][3][1] <= targetAngle[sub][3][2]:
-                if sub == 0:
-                    anglesSatisfied[0] = True
-                else:
-                    anglesSatisfied[1] = True
+            if _exName[sub][0][0] <= currentAngle[sub][0][1] <= _exName[sub][0][2] and \
+                    _exName[sub][1][0] <= currentAngle[sub][1][1] <= _exName[sub][1][2] and \
+                    _exName[sub][2][0] <= currentAngle[sub][2][1] <= _exName[sub][2][2] and \
+                    _exName[sub][3][0] <= currentAngle[sub][3][1] <= _exName[sub][3][2]:
+                reps[sub] = True
+            else:
+                reps[sub] = False
 
-        if anglesSatisfied is True:
+        # print(reps)
+        if reps[0] is True or reps[1] is True:
             return True
         else:
             return False
-
-    except KeyError:
+    except IndexError:
         pass
+
+
+# _____________________________________________________________________________
+def trackMovement(num, xcor, ycor):
+    # Nose, leftShoulder, leftElbow, leftWrist, rightShoulder, rightElbow, rightWrist,
+    # leftHip, leftKnee, leftAnkle, rightHip, rightKnee, rightAnkle
+    # if num == 0:
+    #     pass
+    return
+
+
+# _____________________________________________________________________________
+def trackAngles(leftAngles, rightAngles):
+    return
 
 
 # _____________________________________________________________________________
@@ -385,6 +395,13 @@ def fps(img, pTime):
 def terminateWindows(video):
     video.release()
     cv2.destroyAllWindows()
+
+
+def padding(pad):
+    padless = len(pad)
+    if padless < 19:
+        pad += " " * (19 - padless)
+    return pad
 
 
 # _____________________________________________________________________________

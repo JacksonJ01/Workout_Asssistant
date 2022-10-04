@@ -1,6 +1,6 @@
 from cameraFunct import *
 from plotMain import plot
-from socket import socket, AF_INET,\
+from socket import socket, AF_INET, \
     SOCK_DGRAM, SOCK_STREAM, gethostname as ghn, gethostbyname as gbhn
 
 
@@ -13,11 +13,13 @@ def exerciseCamera(defaultCam=1):
     pTime = 0
 
     # Thinking of tracking the positioning of
-    tracked = {"nose": [],
-               "leftShoulder|leftWrist": [], "rightShoulder|rightWrist": [],
-               "leftHip|LeftAnkle": [], "rightHip|rightAnkle": []}
+    # tracked = {"nose": [],
+    #            "leftShoulder|leftWrist": [], "rightShoulder|rightWrist": [],
+    #            "leftHip|LeftAnkle": [], "rightHip|rightAnkle": []}
 
-    verificationTime = .2  # The program will take 2x seconds to verify the workout
+    exerciseDict = {}
+
+    verificationTime = .1  # The program will take 2x seconds to verify the workout
     startingPreparations = time()
     beginVerification = None
 
@@ -32,22 +34,26 @@ def exerciseCamera(defaultCam=1):
     nOrLatch = False
     repCount = 0
 
-    started = False
+    endWorkout = False
+    # If the user hasn't started a new postion after x amount of time, stop the workout
 
     if defaultCam == 0:
         video = cv2.VideoCapture(0)
+    elif defaultCam == (0, 1):
+        print("Okay")
+        video = cv2.VideoCapture(1)
     elif defaultCam == 1:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test1.gif")  # Bicep Curl
+        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test1.gif")  # Single Arm Bicep Curl
     elif defaultCam == 2:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test2.gif")  # Bicep Curl 2
+        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test2.mp4")  # Bicep Curl 2
     elif defaultCam == 3:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test6.gif")  # Bicep Curls  need new
+        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test3.gif")  # Bicep Curls  need new
     elif defaultCam == 4:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test3.gif")  # Squat
+        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test4.gif")  # Squat
     elif defaultCam == 5:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test4.gif")  # Back Squat 2
+        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test5.gif")  # Back Squat 2
     elif defaultCam == 6:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test5.gif")  # Squat 3  need new
+        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test6.gif")  # Squat 3  need new
     elif defaultCam == 7:
         video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test7.gif")  # Front Squats
     elif defaultCam == 8:
@@ -55,8 +61,8 @@ def exerciseCamera(defaultCam=1):
     elif defaultCam == 9:
         video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test9.gif")
 
-    xLength = 1080
-    yHeight = 720
+    xLength = 720
+    yHeight = 480
     video.set(3, xLength)
     video.set(4, yHeight)
 
@@ -64,16 +70,19 @@ def exerciseCamera(defaultCam=1):
     # Communication
     server = socket(AF_INET, SOCK_DGRAM)
     serverAddressPort = ("127.0.0.1", 54124)
+    exName = None
 
+    downTime = 5
+    currentDownTime = time()
+    # firstTimeCheckBool = True
+    minimumRepCount = 1
     while True:
         try:
-            img, assumption2, repCompleted, allLocations = readImg(video, pose, drawLM, showInterest=True,
-                                                                   showDots=False, showLines=True,
-                                                                   showText=True, known=known,
-                                                                   confirmedExercise=confirmedExercise)
-
-
-
+            img, assumption2, exName, repCompleted, trackedAngles, allLocations = readImg(video, pose, drawLM, exName,
+                                                                                          showInterest=True, showDots=False,
+                                                                                          showLines=True,
+                                                                                          showText=True, known=known,
+                                                                                          confirmedExercise=confirmedExercise)
 
             # print(allLocations)
             convertedLoc = []
@@ -83,7 +92,7 @@ def exerciseCamera(defaultCam=1):
                 convertedLoc.append(new)
 
             server.sendto(str.encode(str(convertedLoc)), serverAddressPort)
-            print(convertedLoc)
+            # print(convertedLoc)
 
         except TypeError:
             continue
@@ -92,16 +101,39 @@ def exerciseCamera(defaultCam=1):
         elapsedTime = time()
 
         if known is True:
-         # Here 09/17/22
-            print("repCompleted:", repCompleted)
+            # if firstTimeCheckBool is True:
+            #     firstTimeCheckBool = False
+                # currentDownTime = time()
+
+            # Here 09/17/22
+            print("\nWithin Repetition Target Range:", repCompleted)
             if repCompleted is True and nOrLatch is False:
                 repCount += 1
                 nOrLatch = True
+                currentDownTime = int(time())
 
             elif repCompleted is False and nOrLatch is True:
                 nOrLatch = False
 
-            print("repCount:", repCount)
+            if repCompleted is False:
+                if int(time()) - currentDownTime >= downTime:
+                    known = False
+                    assumptionMade = False
+                    startingPreparations, currentDownTime = time(), time()
+
+                    if exName.mirrored is False:
+                        repCount /= 2
+
+                    if repCount > minimumRepCount:
+                        if confirmedExercise not in exerciseDict:
+                            exerciseDict[confirmedExercise] = repCount
+                        else:
+                            exerciseDict[str(confirmedExercise) + "*"] = repCount
+                        repCount = 0
+
+                    # reset the values
+            print(exerciseDict)
+            print("Repetition Tracker:", repCount)
 
         else:
             # This allows the program to get an initial idea on what the exercise might be
@@ -122,12 +154,12 @@ def exerciseCamera(defaultCam=1):
 
             if assumptionMade is True:
                 if (elapsedTime - beginVerification) > verificationTime:
-                    print("Time to evaluate", elapsedTime - beginVerification)
+                    print("\nTime Elapsed:", float(elapsedTime - beginVerification))
                     print("assumption1:", assumption, " | assumption2:", assumption2)
                     try:
                         if assumption == assumption2 and assumption2 is not None:
                             confirmedExercise = assumption
-                            print("Exercise Confirmed:", confirmedExercise)
+                            print("\nExercise Confirmed:", confirmedExercise, "\n")
                             known = True
 
                     except IndexError or TypeError:
@@ -145,102 +177,33 @@ def exerciseCamera(defaultCam=1):
             pass
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
+            if repCount > minimumRepCount:
+                if confirmedExercise not in exerciseDict:
+                    exerciseDict[confirmedExercise] = repCount
+                else:
+                    exerciseDict[str(confirmedExercise) + "*"] = repCount
+                repCount = 0
+
+            print(exerciseDict)
             quit()
 
     terminateWindows(video)
 
 
-# _____________________________________________________________________________
-def gameCamera(defaultCam=1, video=None):
-    ipAddress = "127.0.0.1"
-    portNumber = 54124
-    server = socket(AF_INET, SOCK_DGRAM)
-    serverAddressPort = (ipAddress, portNumber)
+# _______________________________________________________________________________________________
+# exerciseCamera(0)
+# exerciseCamera((0, 1))
+exerciseCamera(1)   # Single Arm Bicep Curls | 3 reps
+# exerciseCamera(2)   # Bicep Curls | 5 reps
+# exerciseCamera(3)   # Bicep Curls | 5 reps
+# exercise3Camera(4)   # Needs Replacement | Record Single Arm Bicep Curls on the Computer From Different Camera Angles
+# exerciseCamera(5)   # Needs Replacement | Currently Buggy Squats | Record Bicep Curls on the Computer From Different Camera Angle
 
-    mPose = mp.solutions.pose
-    pose = mPose.Pose()
-    drawLM = mp.solutions.drawing_utils
-
-    xLength = 1080
-    yHeight = 720
-
-    # I am just realizing these gifs only work on my laptop
-    if defaultCam == 0:
-        video = cv2.VideoCapture(0)
-    else:
-        exit("Wrong Fucntion")
-
-    video.set(3, xLength)
-    video.set(4, yHeight)
-
-    while True:
-        try:
-            img, _, _, allLocations = readImg(video, pose, drawLM, showInterest=True, showDots=False, showLines=True,
-                                              showText=True)
-
-            print(allLocations)
-            convertedLoc = []
-            # Loop to adjust the Y cords of the location
-            for cor in allLocations:
-                new = cor[1], yHeight - cor[2], cor[3]
-                convertedLoc.append(new)
-
-            # print(convertedLoc)
-
-            try:
-                cv2.imshow("Image", img)
-            except cv2.error:
-                pass
-
-            if cv2.waitKey(1) & 0xFF == ord('z'):
-                terminateWindows(video)
-                quit()
-
-            server.sendto(str.encode(str(convertedLoc)), serverAddressPort)
-
-        except TypeError:
-            pass
+# exerciseCamera(6)   # Goblet Squats
+# exerciseCamera(7)   # Goblet Squats
+# exerciseCamera(8)   # Barbell Squats
+# exerciseCamera(9)   # Need Barbell Squats | Record Barbell Squats on the Computer From Different Angles
+# exerciseCamera(10)  #
 
 
-# _____________________________________________________________________________
-def cameraPlotting():
-    mPose = mp.solutions.pose
-    pose = mPose.Pose()
-    drawLM = mp.solutions.drawing_utils
-    # img = None
-    video = cv2.VideoCapture(0)
-    # video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test6.gif")
-    while True:
-        try:
-            img, _, _, allLocations = readImg(video, pose, drawLM, showInterest=True, showDots=False, showLines=True,
-                                              showText=True)
-
-            # print(allLocations)
-            cv2.imshow("Image", img)
-
-            try:
-                plotCords = []
-                for x in allLocations:
-                    plotting = [x[1], x[2], x[3]]
-                    plotCords.append(plotting)
-
-                print(plotCords)
-                plot(plotCords)
-
-            except TypeError:
-                pass
-
-        except cv2.error or TypeError:
-            pass
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    terminateWindows(video)
-    return
-
-
-#_______________________________________________________________________________________________
-# gameCamera()
-exerciseCamera(1)
-# 1, 2, , 4, 5, , ,7 ,8 ,9
-# cameraPlotting()
+# I need to record my own videos
