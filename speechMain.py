@@ -1,4 +1,5 @@
 from speechFunct import talkOrText, listeningToUser, analyzeResponse, textToSpeech
+from client import ClientMessaging
 
 chatMode = 2
 
@@ -22,11 +23,12 @@ def chatBot(_context=None):
 
 
 _context = None
-# iterations = 0
+client = ClientMessaging
+
 while True:
-    # print(iterations)
     response, _context = chatBot(_context)
-    # print("Context:", _context)
-    # iterations += 1
-    # print()
     print("Response:", response, "\n") if response != "Disconnecting" else quit("Disconnected")
+    try:
+        client.sendServerMessage(response)
+    except ConnectionError:
+        pass

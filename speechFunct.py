@@ -58,11 +58,11 @@ def analyzeResponse(userInput, context):
 
 
 # edit this function to allow context messages
-def checkMessage(userInput, contextFiltered=None):
+def checkMessage(userInput: str, contextFiltered=None):
     # print("In", contextFiltered)
     highestProbability = {}
     contextSet = {}
-    minimumTime = 30
+    minimumTime = 5
 
     def response(chatBotResponse, listOfWords, singleResponse=False,
                  requiredWords=[], userIn=userInput.lower(), filtering=None, filtered=None):
@@ -85,32 +85,31 @@ def checkMessage(userInput, contextFiltered=None):
             highestProbability[chatBotResponse] = messageProbability(userIn, listOfWords, singleResponse, requiredWords)
             contextSet[chatBotResponse] = filtering
 
-    if contextFiltered == "start timer":
+    if contextFiltered == ("start timer"):
         try:
-            # userInput = str(userInput).replace("[", "").replace("]", "")\
-            #     .replace("'", "").replace(",", "")
-
             # To get the numbers from the userInput
             amountOfTime = [int(length) for length in userInput.split() if length.isdigit()]
-
+            # print(amountOfTime)
+            if not amountOfTime:
+                return unknown(), None
             unit = ""
-            if amountOfTime[0] == 1:
-                if "second" in userInput:
-                    # unit = "seconds"  # sets the timer to second
-                    return "You are unable to set a timer for 1 second"
-                if "minute" in userInput:
-                    unit = "minute"  # sets the timer to minute
-                if "hour" in userInput:
-                    unit = "hour"  # sets the timer to hour
-            else:
-                if "second" in userInput:
-                    if amountOfTime[0] < minimumTime:
-                        return f"You are unable to set a timer under {minimumTime} seconds\n"
-                    unit = "seconds"  # sets the timer to seconds
-                if "minute" in userInput:
-                    unit = "minutes"  # sets the timer to minutes
-                if "hour" in userInput:
-                    unit = "hours"  # sets the timer to hours
+            # if amountOfTime[0] == 1:
+            #     if "second" in userInput:
+            #         # unit = "seconds"  # sets the timer to second
+            #         return "You are unable to set a timer for 1 second", "start timer"
+            #     if "minute" in userInput:
+            #         unit = "minute"  # sets the timer to minute
+            #     if "hour" in userInput:
+            #         unit = "hour"  # sets the timer to hour
+            # else:
+            if "second" in userInput:
+                if amountOfTime[0] < minimumTime:
+                    return f"You are unable to set a timer under {minimumTime} seconds\n", "start timer"
+                unit = "seconds"  # sets the timer to seconds
+            if "minute" in userInput:
+                unit = "minutes"  # sets the timer to minutes
+            if "hour" in userInput:
+                unit = "hours"  # sets the timer to hours
 
             return f"Starting Timer For {amountOfTime[0]} {unit}\n", None
 

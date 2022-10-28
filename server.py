@@ -1,10 +1,12 @@
-from cameraMain import exerciseCamera
+# from cameraMain import exerciseCamera
 # from plotMain import plot
 import keyboard
 from time import sleep as s
 from socket import socket, AF_INET,\
     SOCK_DGRAM, SOCK_STREAM, gethostname as ghn, gethostbyname as gbhn
 from threading import Thread, active_count
+from multiprocessing import Process, Manager
+from timerStopwatch import timer
 
 # # Communication For Unity
 # ipAddress = "127.0.0.1"
@@ -72,6 +74,7 @@ from threading import Thread, active_count
 #
 #
 
+
 KEY = "Server"
 HEADER = 160
 HOSTNAME = gbhn(ghn())
@@ -83,118 +86,103 @@ server = socket(AF_INET, SOCK_STREAM)
 server.bind(SERVER_ADDRESS_PORT)
 
 
-def ReceiveClientMessage(connection, address=None):
+def ReceiveClientMessage(connection):
     connected = True
     while connected:
         try:
             msgLength = connection.recv(HEADER).decode(FORMAT)
-            # print("1", msgLength)
             if msgLength:
                 msgLength = int(msgLength)
                 msg = connection.recv(msgLength).decode(FORMAT)
-
-                # print("here 1", msg)
                 if DISCONNECTING_MESSAGE in msg:
-                    msg = msg.replace("KEY: ", "")
                     print(msg)
-                    msg = msg.replace(">>>", "").replace(DISCONNECTING_MESSAGE, "").strip()
                     try:
-                        # print(clients)
                         clients.remove(msg)
-                        print(msg, "Removed\nS")
+                        print(msg, "Removed\n")
                     except ValueError:
-                        # print("Failed", msg)
                         pass
                     connected = False
                     connection.close()
-
-                if "TO: " in msg:
-                    msg = f"{msg}".replace("TO: ", "")
-                    destination = ""
-                    for letter in msg:
-                        if letter != " ":
-                            destination += letter
-                            msg = msg[1:]
-                        else:
-                            msg = msg.replace(" | FROM: ", "")
-                            break
-
-                    if destination == KEY:
-                        try:
-                            old = speakingTo[0]
-                            if msg != old:
-                                print("")
-                        except IndexError:
-                            pass
-                        finally:
-                            speakingTo.insert(0, msg)  # Might Cause Problems
-
-                        if msg not in clients:
-                            print(f"New Connection Between {speakingTo[0]}")
-                            sendClientMessage(connection, "Connected", speakingTo[0])
-                            # s(4)
-                            # sendClientMessage(connection, "Test", speakingTo[0])
-                            clients.append(msg)
-                            # print(clients)
-                            # print(f"{com} |" for com in clients)
-                        else:
-                            pass
-                    else:
-                        return
-
-                elif "KEY: " in msg:
-                    msg = msg.replace("KEY: ", "")
-                    key = ""
-                    for letter in msg:
-                        if letter != ">":
-                            key += letter
-                        else:
-                            break
-
-                    if key == speakingTo[0]:
-                        # print("2", msg)
-                        sendClientMessage(connection, "Received", speakingTo[0])
-                        print(msg.strip())
+                else:
+                    msg = msg.strip()
+                    msg = msg.lower()
+                    msg = checkClientMessage(msg)
+                    if "timer done" == msg:
+                        print("Timer Done")
+                    # if msg is not None:
+                    #     print(msg, "\n")
 
         except ConnectionResetError:
             pass
 
 
-def sendClientMessage(connection, msg, toClient):
-    message = msg
-    for _message in range(2):
-        if _message == 0:
-            msg = f"TO: {toClient} | FROM: Server"
-        else:
-            msg = f"{KEY}>>> {message}"
+def checkClientMessage(msg: str):
+    if "starting timer for" in msg.lower():
+        manager = Manager()
+        global currentTimerTime
+        currentTimerTime = manager.dict()
 
-        msg = msg.encode(FORMAT)
-        msgLength = len(msg)
-        sendLength = str(msgLength).encode(FORMAT)
-        sendLength += b" " * (HEADER - len(sendLength))
-        # print(msg)
+        global startTimer
+        amountOfTime = [int(num) for num in msg.split() if num.isdigit()][0]
+
+        if "seconds" in msg:
+            startTimer = Process(target=timer, args=([0, 0, amountOfTime], currentTimerTime))
+            unit = "seconds"
+        elif "minutes" in msg:
+            startTimer = Process(target=timer, args=([0, amountOfTime, 0], currentTimerTime))
+            unit = "minutes"
+        elif "hours" in msg:
+            startTimer = Process(target=timer, args=([amountOfTime, 0, 0], currentTimerTime))
+            unit = "hours"
+
+        startTimer.start()
+        # startTimer.join()
+
+    elif "pausing timer" in msg.lower():
+        # If user tries to pause the timer, the
         try:
-            connection.send(msg)
-        except ConnectionResetError:
-            try:
-                clients.remove(toClient)
-            except ValueError:
-                pass
+            startTimer.terminate()
+            currentTimerTime = currentTimerTime.values()
+            print("Timer Paused At:", currentTimerTime)
+
+        except AttributeError:
+            pass
+
+    else:
+        return msg
+
+    return None
+
+
+def sendClientMessage(connection, msg: str, toClient):
+    msg = msg.encode(FORMAT)
+    msgLength = len(msg)
+    sendLength = str(msgLength).encode(FORMAT)
+    sendLength += b" " * (HEADER - len(sendLength))
+    try:
+        connection.send(msg)
+    except ConnectionResetError:
+        try:
+            clients.remove(toClient)
+        except ValueError:
+            pass
 
 
 def startServer():
     server.listen()
     print(f"Listening ON {HOSTNAME}\n")
-    serverConnections = 1
     while True:
         connection, address = server.accept()
-        thread = Thread(target=ReceiveClientMessage, args=(connection, address))
+        thread = Thread(target=ReceiveClientMessage, args=(connection,))
         thread.start()
+        # threading
         # print(f"\nActive Connections: {active_count() - serverConnections}\n")
         s(.25)
 
 
+currentTimerTime = 0
+startTimer = None
 print("Starting Server")
 clients = []
 speakingTo = []
-# startServer()
+startServer()
