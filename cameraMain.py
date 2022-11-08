@@ -1,7 +1,9 @@
+import cv2
 from cameraFunct import *
-from plotMain import plot
-from socket import socket, AF_INET, \
-    SOCK_DGRAM, SOCK_STREAM, gethostname as ghn, gethostbyname as gbhn
+
+# from plotMain import plot
+from PIL import Image
+from socket import socket, AF_INET, SOCK_DGRAM
 
 
 # _____________________________________________________________________________
@@ -18,7 +20,6 @@ def exerciseCamera(defaultCam=1):
     #            "leftHip|LeftAnkle": [], "rightHip|rightAnkle": []}
 
     exerciseDict = {}
-
     verificationTime = .1  # The program will take 2x seconds to verify the workout
     startingPreparations = time()
     beginVerification = None
@@ -36,30 +37,36 @@ def exerciseCamera(defaultCam=1):
 
     endWorkout = False
     # If the user hasn't started a new postion after x amount of time, stop the workout
-
     if defaultCam == 0:
-        video = cv2.VideoCapture(0)
+        video = VideoCapture(0)
     elif defaultCam == (0, 1):
         print("Okay")
-        video = cv2.VideoCapture(1)
+        video = VideoCapture(1)
     elif defaultCam == 1:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test1.gif")  # Single Arm Bicep Curl
+        video = VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test1.gif")  # Single Arm Bicep Curl
     elif defaultCam == 2:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test2.mp4")  # Bicep Curl 2
+        video = VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test2.mp4")  # Bicep Curl 2
     elif defaultCam == 3:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test3.gif")  # Bicep Curls  need new
+        video = VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test3.gif")  # Bicep Curls  need new
     elif defaultCam == 4:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test4.gif")  # Squat
+        video = VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test4.gif")  # Squat
     elif defaultCam == 5:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test5.gif")  # Back Squat 2
+        video = VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test5.gif")  # Back Squat 2
     elif defaultCam == 6:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test6.gif")  # Squat 3  need new
+        video = VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test6.gif")  # Squat 3  need new
     elif defaultCam == 7:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test7.gif")  # Front Squats
+        video = VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test7.gif")  # Front Squats
     elif defaultCam == 8:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test8.gif")  # Front Squats
+        video = VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test8.gif")  # Front Squats
     elif defaultCam == 9:
-        video = cv2.VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test9.gif")
+        video = VideoCapture("C:\\Users\\Big Boi J\\Downloads\\test9.gif")
+
+    endTime = None
+    if defaultCam == 1 or 2 < defaultCam:
+        gif = Image.open("C:\\Users\\Big Boi J\\Downloads\\test{}.gif".format(defaultCam))
+        lengthOfGif = findDur(gif)
+        startTime = int(time())
+        endTime = int(startTime + (lengthOfGif / 2))
 
     xLength = 720
     yHeight = 480
@@ -68,8 +75,8 @@ def exerciseCamera(defaultCam=1):
 
     #
     # Communication
-    server = socket(AF_INET, SOCK_DGRAM)
-    serverAddressPort = ("127.0.0.1", 54124)
+    # server = socket(AF_INET, SOCK_DGRAM)
+    # serverAddressPort = ("127.0.0.1", 54124)
     exName = None
 
     downTime = 5
@@ -77,13 +84,19 @@ def exerciseCamera(defaultCam=1):
     # firstTimeCheckBool = True
     minimumRepCount = 1
     while True:
-        try:
-            img, assumption2, exName, repCompleted, trackedAngles, allLocations = readImg(video, pose, drawLM, exName,
-                                                                                          showInterest=True, showDots=False,
-                                                                                          showLines=True,
-                                                                                          showText=True, known=known,
-                                                                                          confirmedExercise=confirmedExercise)
+        # print(int(time()), endTime)
+        # if endTime is not None and endTime <= time():
+        #     cv2.destroyAllWindows()
+        #     # print("Closed 1")
+        #     break
 
+        try:
+            img, assumption2, exName, \
+            repCompleted, paddedPrint, trackedAngles, \
+            allLocations = readImg(video, pose, drawLM, exName,
+                                   showInterest=True, showDots=False,
+                                   showLines=True, showText=True, known=known,
+                                   confirmedExercise=confirmedExercise)
             # print(allLocations)
             convertedLoc = []
             # Loop to adjust the Y cords of the location
@@ -91,7 +104,7 @@ def exerciseCamera(defaultCam=1):
                 new = cor[1], yHeight - cor[2], cor[3]
                 convertedLoc.append(new)
 
-            server.sendto(str.encode(str(convertedLoc)), serverAddressPort)
+            # server.sendto(str.encode(str(convertedLoc)), serverAddressPort)
             # print(convertedLoc)
 
         except TypeError:
@@ -172,11 +185,12 @@ def exerciseCamera(defaultCam=1):
                         assumptionMade = False
 
         try:
-            cv2.imshow("Image", img)
-        except cv2.error:
+            imshow("Picture", img)
+            pass
+        except error:
             pass
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if waitKey(1) & 0xFF == ord('q'):
             if repCount > minimumRepCount:
                 if confirmedExercise not in exerciseDict:
                     exerciseDict[confirmedExercise] = repCount
@@ -193,10 +207,10 @@ def exerciseCamera(defaultCam=1):
 # _______________________________________________________________________________________________
 # exerciseCamera(0)
 # exerciseCamera((0, 1))
-exerciseCamera(1)   # Single Arm Bicep Curls | 3 reps
+# exerciseCamera(1)   # Single Arm Bicep Curls | 3 reps
 # exerciseCamera(2)   # Bicep Curls | 5 reps
-# exerciseCamera(3)   # Bicep Curls | 5 reps
-# exercise3Camera(4)   # Needs Replacement | Record Single Arm Bicep Curls on the Computer From Different Camera Angles
+exerciseCamera(3)   # Bicep Curls | 5 reps
+# exercise3Camera(4)  # Needs Replacement | Record Single Arm Bicep Curls on the Computer From Different Camera Angles
 # exerciseCamera(5)   # Needs Replacement | Currently Buggy Squats | Record Bicep Curls on the Computer From Different Camera Angle
 
 # exerciseCamera(6)   # Goblet Squats
@@ -204,6 +218,3 @@ exerciseCamera(1)   # Single Arm Bicep Curls | 3 reps
 # exerciseCamera(8)   # Barbell Squats
 # exerciseCamera(9)   # Need Barbell Squats | Record Barbell Squats on the Computer From Different Angles
 # exerciseCamera(10)  #
-
-
-# I need to record my own videos

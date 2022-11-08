@@ -35,15 +35,23 @@ def listeningToUser(talk=False):
             _audio = mic.listen(_source)
         try:
             print("Speak Now...")
+            # Needs to have a wake word
             audioText = mic.recognize_google(_audio)
             return audioText
         except UnknownValueError:
             return False
 
     elif talk is False:
-        text = input("Type Your Message:"
-                     "\nYou>>>")
-        return text
+        # text = input("Type Your Message:"
+        #              "\nYou>>>")
+        # return text
+        try:
+            text = input("\nType Your Message:"
+                         "\nYou>>>")
+            return text
+        except EOFError:
+            pass
+
 
 
 def analyzeResponse(userInput, context):

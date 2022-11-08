@@ -1,4 +1,6 @@
-import cv2
+from cv2 import resize, imshow, error, putText, COLOR_BGR2RGB, FILLED, \
+    destroyAllWindows, FONT_HERSHEY_PLAIN, cvtColor, \
+    circle, VideoCapture, waitKey
 import mediapipe as mp
 from math import atan2, pi, dist
 from time import time  # , sleep as s
@@ -11,9 +13,9 @@ def readImg(video, pose, drawLM, exName, showInterest=False, showDots=False,
     try:
         # img = cv2.resize(img, (1080, 720))
         # img = cv2.resize(img, (720, 480))
-        img = cv2.resize(img, (900, 500))
-        cv2.imshow("Image", img)
-    except cv2.error:
+        img = resize(img, (900, 500))
+        # imshow("Image", img)
+    except error:
             pass
 
     if not _:
@@ -37,12 +39,14 @@ def readImg(video, pose, drawLM, exName, showInterest=False, showDots=False,
     # print(leftAngles)
     # print(rightAngles)
 
-    return img, assumption, exName, False, None, allLocations
+    return img, assumption, exName, [False, None], None, allLocations
 
 
 # _____________________________________________________________________________
 def findLandmarks(img, pose):
-    imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    """Hello"""
+
+    imgRGB = cvtColor(img, COLOR_BGR2RGB)
     results = pose.process(imgRGB).pose_landmarks
     # displayText(img, "", "")
     return img, results
@@ -78,7 +82,7 @@ def getLandmarkLocations(img, drawLM, results, showInterest=False, showDots=Fals
                 locationsOfInterests.append((num, xcor, ycor, vis))
 
                 if showDots is True or showInterest is True:
-                    cv2.circle(img, (xcor, ycor), 5, (0, 0, 0), cv2.FILLED)
+                    circle(img, (xcor, ycor), 5, (0, 0, 0), FILLED)
 
     # print(locationsOfInterests)
     return img, locationsOfInterests, allLocations
@@ -195,6 +199,9 @@ class Exercise:
                  relbow, rpit, rhip, rknee,
                  mirrored=False,
                  specificPositioning=False):
+        """
+        Each exercise will have its own set of angles, and other attributes
+        """
         self.name = name
         self.leftAngles = [lelbow, lpit, lhip, lknee]
         self.rightAngles = [relbow, rpit, rhip, rknee]
@@ -208,20 +215,20 @@ class Exercise:
         return self.rightAngles
 
 
-bicepCurls = Exercise("bicepCurls",
+bicepCurls = Exercise("Bicep Curls",
                       (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180),
                       (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180),
                       True)
-singleArmBicepCurls = Exercise("singleArmBicepCurls",
+singleArmBicepCurls = Exercise("Single Arm Bicep Curls",
                                (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180),
                                (0, 110, 75), (0, 45, 45), (120, 180, 180), (120, 180, 180)
                                )
-barbellSquats = Exercise("barbellSquats",
+barbellSquats = Exercise("Barbell Squats",
                          (15, 110, 110), (15, 110, 110), (0, 150, 150), (0, 150, 150),
                          (15, 110, 110), (15, 110, 110), (0, 150, 150), (0, 150, 150),
                          True
                          )
-gobletSquats = Exercise("gobletSquats",
+gobletSquats = Exercise("Goblet Squats",
                         (0, 30, 30), (0, 50, 50), (0, 150, 150), (0, 150, 150),
                         (0, 30, 30), (0, 50, 50), (0, 150, 150), (0, 150, 150),
                         True
@@ -239,7 +246,7 @@ exercises = {bicepCurls: [bicepCurls.exerciseLeftAngles(),
 
 # _____________________________________________________________________________
 def detectExercise(leftAngles, rightAngles, loc):
-    print("\nDetecting")
+    # print("\nDetecting")
     # presetExerciseAngles = []
     # Exercises listed below have 2 lists. These lists correlate to the major and minor angles list;
     # When the computer checks for the exercises, it will loop through the list and append that to another loop#
@@ -312,7 +319,7 @@ def detectExercise(leftAngles, rightAngles, loc):
     try:
         exName = potentialExercises[0]
         # exName = exName.name
-        print(exName.name)
+        # print(exName.name)
         return exName.name, exName
     except IndexError:
         pass
@@ -320,8 +327,7 @@ def detectExercise(leftAngles, rightAngles, loc):
 
 # _____________________________________________________________________________
 def detectRepetitions(confirmedExercise, leftAngles, rightAngles, loc=None, exName=None):
-    print(f"\nDetecting Reps For: {confirmedExercise}\n")
-    # print(confirmedExercise)
+    # print(f"\nDetecting Reps For: {confirmedExercise}\n")
     try:
         currentAngle = leftAngles, rightAngles
         # print(currentAngle[0],
@@ -334,12 +340,14 @@ def detectRepetitions(confirmedExercise, leftAngles, rightAngles, loc=None, exNa
 
         reps = [False, False]
         # Display for a visual of the angles at work
-        print("                |      Left Side      |      Right Side",
-              f"\nShoulder Angle  |  {padding(f'{_exName[0][1][0]} <= {currentAngle[0][1][1]} <= {_exName[0][1][2]}')}|  {padding(f'{_exName[1][1][0]} <= {currentAngle[1][1][1]} <= {_exName[1][1][2]}')}|",
-              f"\nElbow Angle     |  {padding(f'{_exName[0][0][0]} <= {currentAngle[0][1][1]} <= {_exName[0][0][2]}')}|  {padding(f'{_exName[1][0][0]} <= {currentAngle[1][0][1]} <= {_exName[1][0][2]}')}|",
-              f"\nHip Angle       |  {padding(f'{_exName[0][2][0]} <= {currentAngle[0][2][1]} <= {_exName[0][2][2]}')}|  {padding(f'{_exName[1][2][0]} <= {currentAngle[1][2][1]} <= {_exName[1][2][2]}')}|",
-              f"\nKnee Angle      |  {padding(f'{_exName[0][3][0]} <= {currentAngle[0][3][1]} <= {_exName[0][3][2]}')}|  {padding(f'{_exName[1][3][0]} <= {currentAngle[1][3][1]} <= {_exName[1][3][2]}')}|")
+        paddedPrint = f"""
+                |      Left Side      |      Right Side
+Shoulder Angle  |  {padding(f'{_exName[0][1][0]} <= {currentAngle[0][1][1]} <= {_exName[0][1][2]}')}|  {padding(f'{_exName[1][1][0]} <= {currentAngle[1][1][1]} <= {_exName[1][1][2]}')}|
+Elbow Angle     |  {padding(f'{_exName[0][0][0]} <= {currentAngle[0][1][1]} <= {_exName[0][0][2]}')}|  {padding(f'{_exName[1][0][0]} <= {currentAngle[1][0][1]} <= {_exName[1][0][2]}')}|
+Hip Angle       |  {padding(f'{_exName[0][2][0]} <= {currentAngle[0][2][1]} <= {_exName[0][2][2]}')}|  {padding(f'{_exName[1][2][0]} <= {currentAngle[1][2][1]} <= {_exName[1][2][2]}')}|
+Knee Angle      |  {padding(f'{_exName[0][3][0]} <= {currentAngle[0][3][1]} <= {_exName[0][3][2]}')}|  {padding(f'{_exName[1][3][0]} <= {currentAngle[1][3][1]} <= {_exName[1][3][2]}')}|"""
 
+        # print(paddedPrint)
         for sub in range(2):
             if _exName[sub][0][0] <= currentAngle[sub][0][1] <= _exName[sub][0][2] and \
                     _exName[sub][1][0] <= currentAngle[sub][1][1] <= _exName[sub][1][2] and \
@@ -351,9 +359,9 @@ def detectRepetitions(confirmedExercise, leftAngles, rightAngles, loc=None, exNa
 
         # print(reps)
         if reps[0] is True or reps[1] is True:
-            return True
+            return [True, paddedPrint]
         else:
-            return False
+            return [False, paddedPrint]
     except IndexError:
         pass
 
@@ -374,7 +382,7 @@ def trackAngles(leftAngles, rightAngles):
 
 # _____________________________________________________________________________
 def displayText(img, txt, location: tuple, size=1, color=(255, 0, 0), thickness=3):
-    cv2.putText(img, txt, location, cv2.FONT_HERSHEY_PLAIN, size, color, thickness)
+    putText(img, txt, location, FONT_HERSHEY_PLAIN, size, color, thickness)
     return img
 
 
@@ -385,7 +393,7 @@ def fps(img, pTime):
         frames = 1 / (cTime - pTime)
         pTime = cTime
 
-        cv2.putText(img, str(int(frames)), (30, 30), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 3)
+        putText(img, str(int(frames)), (30, 30), FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 3)
     except ZeroDivisionError:
         pass
     return pTime
@@ -394,7 +402,7 @@ def fps(img, pTime):
 # _____________________________________________________________________________
 def terminateWindows(video):
     video.release()
-    cv2.destroyAllWindows()
+    destroyAllWindows()
 
 
 def padding(pad):
@@ -402,6 +410,27 @@ def padding(pad):
     if padless < 19:
         pad += " " * (19 - padless)
     return pad
+
+
+def findDur(imgObj):
+    imgObj.seek(0)
+    total = 0
+    while True:
+        try:
+            # print(total)
+            frame_duration = imgObj.info['duration']  # returns current frame duration in milli sec.
+            total += frame_duration
+            # now move to the next frame of the gif
+            imgObj.seek(imgObj.tell() + 1)  # image.tell() = current frame
+
+        except EOFError:
+            return total / 1000
+
+#
+# gif = Image.open("C:\\Users\\Big Boi J\\Downloads\\test1.gif")
+# length = findDur(gif)
+# print(length / 1000)
+
 
 
 # _____________________________________________________________________________

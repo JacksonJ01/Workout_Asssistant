@@ -5,7 +5,7 @@ from client import ClientMessaging
 from multiprocessing import Manager, Process
 
 
-def timer(timerFor, currentTimerTime, unit):
+def timer(timerFor, queue=None):
     startTime = int(t())
     totalTime = (timerFor[0] * 3600) + \
                 (timerFor[1] * 60) + \
@@ -17,13 +17,17 @@ def timer(timerFor, currentTimerTime, unit):
         elapsed = currentTime - startTime
 
         timeLeft = totalTime - elapsed
-        try:
-            currentTimerTime[timeLeft] = timeLeft
-        except BrokenPipeError:
-            pass
+        # if queue is not None:
+            # try:
+        currentTimerTime = queue.get()
+        currentTimerTime["Timer"] = timeLeft
+        queue.put(currentTimerTime)
+        ClientMessaging.sendServerMessage(timeLeft)
+            # except BrokenPipeError:
+            #     pass
 
         if elapsed > totalTime:
-            # print("\rTimer Done")
+            print("\rTimer Done")
             print()
             ClientMessaging.sendServerMessage("Timer Done")
             return True
@@ -36,27 +40,29 @@ def timer(timerFor, currentTimerTime, unit):
                 sys.stdout.flush()
 
 
-
-
-def waitAndListen():
-    while True:
-        print("Waiting And Listening")
-        try:
-            msg = ClientMessaging.receiveServerMessage()
-            if "Timer Function" in msg:
-                if "Resume Timer":
-                    return
-        except ConnectionError:
-            pass
-
-        s(1)
+#
+# def waitAndListen():
+#     while True:
+#         print("Waiting And Listening")
+#         try:
+#             msg = ClientMessaging.receiveServerMessage()
+#             if "Timer Function" in msg:
+#                 if "Resume Timer":
+#                     return
+#         except ConnectionError:
+#             pass
+#
+#         s(1)
 
 
 # Hours, Minutes, Seconds
-# timed = [1, 0, 0]
+# timed = [0, 0, 1]
 # timer(timed)
-
 # ___________________________________________
+
+
+
+
 # def worker1(time, return_dict1):
 #     newTime = 0
 #     global running
@@ -99,6 +105,8 @@ def waitAndListen():
 #     # p.terminate()
 #
 #     print("Here", return_dict1.values())
+
+
 
 
 # ___________________________________________
