@@ -34,7 +34,7 @@ def openFull(event):
 def closeWindow(event):
     window.quit()
 
-    
+
 window = Tk()
 window.bind("<Left>", closeFull)
 window.bind("<Right>", openFull)
@@ -101,13 +101,13 @@ CurrentDownTime = time()
 MinimumRepCount = 1
 
 _input = StringVar()
-inputField = Entry(window, textvariable=_input, width=80, bg="white", fg="black", borderwidth=5)
+inputField = Entry(window, textvariable=_input, width=80, bg="white", fg="black", borderwidth=5, )
 inputField.bind("<Return>", chatWithChatBot)
 inputField.grid(row=4, column=0)
 
-responseLabel = Label(window, width=70, bg="black", fg="white", borderwidth=5)
-curExLabel = Label(window, text="Current Exercise", width=40, height=10, font=("Arial", 15), bg="black", fg="white", borderwidth=0)
-paddedLabel = Label(window, text="Target Range", anchor="w", width=50, height=12, font=("Arial", 12), bg="black", fg="white", borderwidth=5)
+responseLabel = Label(window, width=70, bg="black", fg="white", borderwidth=0)
+curExLabel = Label(window, text="Current Exercise", width=43, height=10, font=("Arial", 13), bg="black", fg="white", borderwidth=0)
+paddedLabel = Label(window, text="Target Range", anchor="w", width=48, height=12, font=("Arial", 12), bg="black", fg="white", borderwidth=0)
 
 responseLabel.grid(row=3, column=0)
 curExLabel.grid(row=1, column=1)
@@ -141,8 +141,8 @@ def cv2VideoFrames():
 
         responseLabel.configure(text=Response)
 
-        curExLabel.configure(text=ConfirmedExercise)
-        paddedLabel.configure(text=RepCompleted[1])
+        curExLabel.configure(text=(ConfirmedExercise + "\nRep Count: " + str(RepCount) + "\nExerDict: " + str(ExerciseDict)))
+        paddedLabel.configure(text=(str(RepCompleted[1]) + "\n\nIn Target Range: " + str(RepCompleted[0])))
         # Repeat after an interval to capture continuously
         label.after(20, cv2VideoFrames)
 
