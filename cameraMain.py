@@ -1,4 +1,4 @@
-import cv2
+from cv2 import cvtColor, COLOR_BGR2RGB, VideoCapture, waitKey
 from cameraFunct import *
 
 # from plotMain import plot
@@ -81,7 +81,7 @@ def exerciseCamera(defaultCam=1):
 
     downTime = 5
     currentDownTime = time()
-    # firstTimeCheckBool = True
+    #firstTimeCheckBool = True
     minimumRepCount = 1
     while True:
         # print(int(time()), endTime)
@@ -92,7 +92,7 @@ def exerciseCamera(defaultCam=1):
 
         try:
             img, assumption2, exName, \
-            repCompleted, paddedPrint, trackedAngles, \
+            repCompleted, trackedAngles, \
             allLocations = readImg(video, pose, drawLM, exName,
                                    showInterest=True, showDots=False,
                                    showLines=True, showText=True, known=known,
@@ -209,7 +209,7 @@ def exerciseCamera(defaultCam=1):
 # exerciseCamera((0, 1))
 # exerciseCamera(1)   # Single Arm Bicep Curls | 3 reps
 # exerciseCamera(2)   # Bicep Curls | 5 reps
-exerciseCamera(3)   # Bicep Curls | 5 reps
+# exerciseCamera(3)   # Bicep Curls | 5 reps
 # exercise3Camera(4)  # Needs Replacement | Record Single Arm Bicep Curls on the Computer From Different Camera Angles
 # exerciseCamera(5)   # Needs Replacement | Currently Buggy Squats | Record Bicep Curls on the Computer From Different Camera Angle
 

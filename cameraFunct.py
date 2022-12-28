@@ -1,24 +1,20 @@
 from cv2 import resize, imshow, error, putText, COLOR_BGR2RGB, FILLED, \
-    destroyAllWindows, FONT_HERSHEY_PLAIN, cvtColor, \
-    circle, VideoCapture, waitKey
+    destroyAllWindows, FONT_HERSHEY_PLAIN, cvtColor, circle, waitKey, VideoCapture
 import mediapipe as mp
-from math import atan2, pi, dist
-from time import time  # , sleep as s
+from math import atan2, pi
+from time import time
 
 
 def readImg(video, pose, drawLM, exName, showInterest=False, showDots=False,
             showLines=False, showText=False, known=False, confirmedExercise=None):
-    _, img = video.read()
+    returned, img = video.read()
 
     try:
-        # img = cv2.resize(img, (1080, 720))
-        # img = cv2.resize(img, (720, 480))
         img = resize(img, (900, 500))
-        # imshow("Image", img)
     except error:
             pass
 
-    if not _:
+    if not returned:
         return
 
     img, results = findLandmarks(img, pose)
@@ -28,18 +24,14 @@ def readImg(video, pose, drawLM, exName, showInterest=False, showDots=False,
     try:
         img, leftAngles, rightAngles = calculateAngle(img, locationsOfInterest, showText)
         if known is True:
-            return img, assumption, exName, detectRepetitions(confirmedExercise, leftAngles, rightAngles, allLocations, exName), trackAngles(leftAngles, rightAngles), allLocations
+            return returned, img, assumption, exName, detectRepetitions(confirmedExercise, leftAngles, rightAngles, allLocations, exName), trackAngles(leftAngles, rightAngles), allLocations
         else:
             assumption, exName = detectExercise(leftAngles, rightAngles, allLocations)
 
     except TypeError:
         pass
 
-    # print('\n', locationsOfInterest)
-    # print(leftAngles)
-    # print(rightAngles)
-
-    return img, assumption, exName, [False, None], None, allLocations
+    return returned, img, assumption, exName, [False, None], None, allLocations
 
 
 # _____________________________________________________________________________
@@ -48,12 +40,13 @@ def findLandmarks(img, pose):
 
     imgRGB = cvtColor(img, COLOR_BGR2RGB)
     results = pose.process(imgRGB).pose_landmarks
-    # displayText(img, "", "")
     return img, results
 
 
 # _____________________________________________________________________________
 def getLandmarkLocations(img, drawLM, results, showInterest=False, showDots=False, showLines=False):
+    """"""
+
     locationsOfInterests = []
     allLocations = []
     if results:
@@ -65,14 +58,12 @@ def getLandmarkLocations(img, drawLM, results, showInterest=False, showDots=Fals
             drawLM.draw_landmarks(img, results)
 
         for num, info in enumerate(results.landmark):
-            # print(num, "vis", coord.visibility)
             # Nose 0,
             # leftShoulder 11, leftElbow 13, leftWrist 15,
             # rightShoulder 12, rightElbow 14, rightWrist 16,
             # leftHip 23, leftKnee 25, leftAnkle 27,
             # rightHip 24, rightKnee 26, rightAnkle 28
 
-            # print(info)
             h, w, c = img.shape
             xcor, ycor, zcor, vis = int(info.x * w), int(info.y * h), info.z, info.visibility
             allLocations.append((num, xcor, ycor, zcor, vis))
@@ -81,16 +72,16 @@ def getLandmarkLocations(img, drawLM, results, showInterest=False, showDots=Fals
                        23, 24, 25, 26, 27, 28]:
                 locationsOfInterests.append((num, xcor, ycor, vis))
 
-                if showDots is True or showInterest is True:
+                if showDots is True or showInterest is True and num != 0:
                     circle(img, (xcor, ycor), 5, (0, 0, 0), FILLED)
 
-    # print(locationsOfInterests)
     return img, locationsOfInterests, allLocations
 
 
 # _____________________________________________________________________________
 def calculateAngle(img, locationsOfInterest, showText=False):
-    # displayText(img, "", "")
+    """"""
+
     leftAngles = []
     rightAngles = []
     for sub, points in enumerate(locationsOfInterest):
@@ -159,6 +150,8 @@ def calculateAngle(img, locationsOfInterest, showText=False):
 
 # _____________________________________________________________________________
 def checkVisibility(leftVisibility: list, rightVisibility: list):
+    """"""
+
     leftShoulder = leftVisibility[0][2]
     leftElbow = leftVisibility[1][2]
     # leftWrist = leftVisibility
@@ -194,6 +187,8 @@ def checkVisibility(leftVisibility: list, rightVisibility: list):
 
 # _____________________________________________________________________________
 class Exercise:
+    """"""
+
     def __init__(self, name,
                  lelbow, lpit, lhip, lknee,
                  relbow, rpit, rhip, rknee,
@@ -246,25 +241,30 @@ exercises = {bicepCurls: [bicepCurls.exerciseLeftAngles(),
 
 # _____________________________________________________________________________
 def detectExercise(leftAngles, rightAngles, loc):
-    # print("\nDetecting")
-    # presetExerciseAngles = []
-    # Exercises listed below have 2 lists. These lists correlate to the major and minor angles list;
-    # When the computer checks for the exercises, it will loop through the list and append that to another loop#
+    """
+    Exercises listed below have 2 lists. These lists correlate to the major and minor angles list;
+    When the computer checks for the exercises, it will loop through the list and append that to another loop#
+
+    The first [] takes you to either the:
+    exerciseLeftAngles list: [0] or
+    exerciseRightAngles list [1]
+
+    The second [] takes you to the specific angle range for each exercise:
+    Elbow Angle Range: [0]
+    Shoulder Angle Range: [1]
+    Hip Angle Range: [2]
+    Knee Angle Range: [3]
+
+    The third [] takes you to the:
+    Minimum range: [0]
+    Maximum range: [1]
+
+    """
     potentialExercises = []
     mirrored = {}
     angles = leftAngles, rightAngles
     for exercise in exercises:
-        # The first [] takes you to either the:
-        # exerciseLeftAngles list: [0] or
-        # exerciseRightAngles list [1]
-        # The second [] takes you to the specific angle range for each exercise:
-        # Elbow Angle Range: [0]
-        # Shoulder Angle Range: [1]
-        # Hip Angle Range: [2]
-        # Knee Angle Range: [3]
-        # The third [] takes you to the:
-        # Minimum range: [0]
-        # Maximum range: [1]
+
         try:
             mirrored[exercise.name] = [False, False]
             for sub in range(2):
@@ -292,34 +292,18 @@ def detectExercise(leftAngles, rightAngles, loc):
             else:
                 pass
 
-    # Right wrist has to be to the right of the shoulder and within a certain height
-    # Left wrist has to be to the left of the shoulder and within a certain height
+    # if (loc[13][1] or loc[11][1]) >= loc[15][1] and (loc[14][1] or loc[12][1]) <= loc[16][1]:
+    #     if gobletSquats.exerciseLeftAngles()[1][0] <= angles[0][0][1] <= gobletSquats.exerciseLeftAngles()[1][1] and \
+    #                 gobletSquats.exerciseRightAngles()[1][0] <= angles[1][0][1] <= gobletSquats.exerciseRightAngles()[1][1]:
+    #         potentialExercises.insert(0, gobletSquats)
 
-    # If the distance between the wrists and the shoulder is greater than
-    # the distance between the wrist and the middle of the chest then squats
-    # #
-    # Right wrist 15
-    # Right Elbow 13
-    # Right Shoulder 11
-    # Left wrist 16
-    # Left Elbow 14
-    # Left Shoulder 12
-    # print(loc[15][1], loc[11][1], loc[16][1], loc[12][1])
-
-    if (loc[13][1] or loc[11][1]) >= loc[15][1] and (loc[14][1] or loc[12][1]) <= loc[16][1]:
-        if gobletSquats.exerciseLeftAngles()[1][0] <= angles[0][0][1] <= gobletSquats.exerciseLeftAngles()[1][1] and \
-                    gobletSquats.exerciseRightAngles()[1][0] <= angles[1][0][1] <= gobletSquats.exerciseRightAngles()[1][1]:
-            potentialExercises.insert(0, gobletSquats)
-
-    elif loc[15][1] >= loc[13][1] >= loc[11][1] and loc[16][1] <= loc[14][1] <= loc[12][1]:
+    if loc[15][1] >= loc[13][1] >= loc[11][1] and loc[16][1] <= loc[14][1] <= loc[12][1]:
         if barbellSquats.exerciseLeftAngles()[1][0] <= angles[0][0][1] <= barbellSquats.exerciseLeftAngles()[1][1] and \
                 barbellSquats.exerciseRightAngles()[1][0] <= angles[1][0][1] <= barbellSquats.exerciseRightAngles()[1][1]:
             potentialExercises.insert(0, barbellSquats)
 
     try:
         exName = potentialExercises[0]
-        # exName = exName.name
-        # print(exName.name)
         return exName.name, exName
     except IndexError:
         pass
@@ -330,20 +314,14 @@ def detectRepetitions(confirmedExercise, leftAngles, rightAngles, loc=None, exNa
     # print(f"\nDetecting Reps For: {confirmedExercise}\n")
     try:
         currentAngle = leftAngles, rightAngles
-        # print(currentAngle[0],
-        #       "\n", exName.exerciseLeftAngles(),
-        #       "\n", currentAngle[0],
-        #       "\n", exName.exerciseLeftAngles(),
-        #       )
-
         _exName = [exName.exerciseLeftAngles(), exName.exerciseRightAngles()]
 
         reps = [False, False]
         # Display for a visual of the angles at work
         paddedPrint = f"""
                 |      Left Side      |      Right Side
-Shoulder Angle  |  {padding(f'{_exName[0][1][0]} <= {currentAngle[0][1][1]} <= {_exName[0][1][2]}')}|  {padding(f'{_exName[1][1][0]} <= {currentAngle[1][1][1]} <= {_exName[1][1][2]}')}|
-Elbow Angle     |  {padding(f'{_exName[0][0][0]} <= {currentAngle[0][1][1]} <= {_exName[0][0][2]}')}|  {padding(f'{_exName[1][0][0]} <= {currentAngle[1][0][1]} <= {_exName[1][0][2]}')}|
+Shoulder Angle  |  {padding(f'{_exName[0][0][0]} <= {currentAngle[0][1][1]} <= {_exName[0][0][2]}')}|  {padding(f'{_exName[1][0][0]} <= {currentAngle[1][1][1]} <= {_exName[1][0][2]}')}|
+Elbow Angle     |  {padding(f'{_exName[0][1][0]} <= {currentAngle[0][0][1]} <= {_exName[0][1][2]}')}|  {padding(f'{_exName[1][1][0]} <= {currentAngle[1][0][1]} <= {_exName[1][1][2]}')}|
 Hip Angle       |  {padding(f'{_exName[0][2][0]} <= {currentAngle[0][2][1]} <= {_exName[0][2][2]}')}|  {padding(f'{_exName[1][2][0]} <= {currentAngle[1][2][1]} <= {_exName[1][2][2]}')}|
 Knee Angle      |  {padding(f'{_exName[0][3][0]} <= {currentAngle[0][3][1]} <= {_exName[0][3][2]}')}|  {padding(f'{_exName[1][3][0]} <= {currentAngle[1][3][1]} <= {_exName[1][3][2]}')}|"""
 

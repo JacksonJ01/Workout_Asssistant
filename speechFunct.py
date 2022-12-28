@@ -55,13 +55,13 @@ def listeningToUser(talk=False):
 
 
 def analyzeResponse(userInput, context):
-    # print(userInput)
+    #print(userInput)
     for x in userInput:
         if f"{x}".isalpha() is False and f"{x}".isdigit() is False and x != " ":
             userInput = f"{userInput}".replace(f"{x}", "")
     # print(userInput)
     # print("Here1")
-    response, context = checkMessage(userInput, context)
+    response, context = checkMessage(userInput.lower(), context)
     return response, context
 
 
@@ -127,63 +127,86 @@ def checkMessage(userInput: str, contextFiltered=None):
             unknown()
 
     ##################################
-    if contextFiltered == "":
-        pass
+    #if contextfiltered == "":
+    #    pass
 
-    if contextFiltered == "":
+    #if contextfiltered == "":
         pass
 
     # Greeting
     response(["Hello", "Hi", "Hello there"],
              ["hello", "sup", "hey", "heyo", "hi"],
              singleResponse=True)
-    response(["I'm doing well, and you?", "Great, and you?"],
+
+    response(["Maybe, what's up", 
+              "Yes, at the ready", 
+              "Mmm, depends on who's askin"],
+             ["where", "are", "you", "there"],
+             requiredWords=["are", "you", "there"])
+
+    response(["I'm doing well, and you?",
+              "Great, and you?"],
              ["how", "are", "you", "doing"],
              requiredWords=["how", "are", "you"],
              filtering="extendedGreeting")
+
     response(["That's good to hear", "That's great", "Nice!"],
              ["i", "am", "good", "great", "awesome", "amazing", "happy"],
              requiredWords=["i", "am"],
              filtered="extendedGreeting")
-    response(["Awe, I wish I could help more", "Sorry to hear that", "Hopefully things get better"],
+
+    response(["Awe, I wish I could help more",
+              "Sorry to hear that",
+              "Hopefully things get better"],
              ["i", "am", "sad", "bad", "mad", "unhappy"],
              requiredWords=["i", "am"],
              filtered="extendedGreeting")
 
     # Identity Questions
-    response([f"I am {ghn()}", "Your personal assistant", "Call me what you'd like"],
+    response([f"I am {ghn()}",
+              "Your personal assistant",
+              "Call me what you'd like"],
              ["who", "are", "you"],
              requiredWords=["who", "are", "you"])
-    response(["I am magical", "A brilliant mind made me", "I'm just a computer..", "Great question!"],
+
+    response(["I am magical", "A brilliant mind made me",
+              "I'm just a computer..", "Great question!"],
              ["how", "do", "you", "work"],
              requiredWords=["how", "do", "you", "work"])
-    response(["", "", ""],
-             ["", "", "", ""],
-             requiredWords=["", ""])
+
+    #response(["", "", ""],
+    #         ["", "", "", ""],
+    #         requiredWords=["", ""])
 
     # Start Timer
     response(["How long? (Number and Unit Of Time)",
-              "What length of time would you like? (Number and Unit Of Time)",
+              "What length of time would you like? "
+              "(Number and Unit Of Time)",
               "For how long? (Number and Unit Of Time)"],
              ["start", "a", "timer"],
              requiredWords=["start", "timer"],
              filtering="start timer")
+
     # Pause Timer
     response(["Pausing Timer"],
              ["pause", "timer"],
              requiredWords=["pause", "timer"])
+
     # Resume Timer
     response(["Resuming Timer"],
              ["resume", "timer"],
              requiredWords=["resume", "timer"])
+
     # Stop Timer
     response(["Stopping Timer"],
              ["stop", "timer"],
              requiredWords=["end", "timer"])
+
     # End Timer
     response(["Ending Timer", ],
              ["end", "timer"],
              requiredWords=["end", "timer"])
+
     # Cancel Timer
     response(["Cancelling Timer"],
              ["cancel", "timer"],
@@ -197,6 +220,7 @@ def checkMessage(userInput: str, contextFiltered=None):
     response(["Okay", "Starting Stopwatch"],
              ["start", "a", "stop", "watch"],
              requiredWords=["start", "stop", "watch"])
+
     # Pause Stopwatch
     response(["Pausing Stopwatch"],
              ["pause", "stopwatch"],
@@ -204,6 +228,7 @@ def checkMessage(userInput: str, contextFiltered=None):
     response(["Pausing Stopwatch"],
              ["pause", "stop", "watch"],
              requiredWords=["pause", "stop", "watch"])
+
     # Resume Stopwatch
     response(["Resuming Stopwatch"],
              ["resume", "stopwatch"],
@@ -211,6 +236,7 @@ def checkMessage(userInput: str, contextFiltered=None):
     response(["Resuming Stopwatch"],
              ["resume", "stop", "watch"],
              requiredWords=["resume", "stop", "watch"])
+
     # Stop Stopwatch
     response(["Stopping Stopwatch"],
              ["stop", "stopwatch"],
@@ -218,6 +244,7 @@ def checkMessage(userInput: str, contextFiltered=None):
     response(["Stopping Stopwatch"],
              ["stop", "stop", "watch"],
              requiredWords=["end", "stop", "watch"])
+
     # End Stopwatch
     response(["Ending Stopwatch"],
              ["end", "stopwatch"],
@@ -225,6 +252,7 @@ def checkMessage(userInput: str, contextFiltered=None):
     response(["Ending Stopwatch"],
              ["end", "stop", "watch"],
              requiredWords=["end", "stop", "watch"])
+
     # Cancel Stopwatch
     response(["Cancelling Stopwatch"],
              ["cancel", "stopwatch"],
@@ -262,9 +290,11 @@ def checkMessage(userInput: str, contextFiltered=None):
     response(["You too", "You as well", "Have a good night"],
              ["have", "a", "great", "good", "day"],
              requiredWords=["have", "day"])
+
     response(["Goodbye", "See you later"],
              ["bye", "goodbye", "adios"],
              singleResponse=True)
+
     response("Disconnecting",
              ["disconnect", "from", "server"],
              requiredWords=["disconnect"])
